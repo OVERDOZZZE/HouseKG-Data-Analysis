@@ -28,10 +28,13 @@ class FileManager:
     def add(self, data: dict) -> None:
        with self.lock:
            self.rows.append(data)
+           if len(self.rows >= 100):
+               self.save()
+               self.rows = ()
     
     def save(self) -> None:
         df = pd.DataFrame(self.rows)
-        df.to_csv(self.filepath / f'{self.deal}_{self.property}.csv')
+        df.to_csv(self.filepath / f'{self.deal}_{self.property}.csv', mode='a', header=not self.filepath.exists())
 
 
 class Parser(ABC):

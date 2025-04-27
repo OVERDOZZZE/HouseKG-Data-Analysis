@@ -51,6 +51,9 @@ class App:
         end = time.time()
         print(f'Time consumed: {round(end - start, 4)} seconds')
 
+        if self.filemanager.rows:
+            self.filemanager.save()
+
 
 if __name__ == '__main__':
     app = App()
