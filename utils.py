@@ -9,6 +9,8 @@ from abc import ABC, abstractmethod
 from typing import Any
 from urllib3.util.retry import Retry
 import threading
+import hashlib
+import os
 
 
 session = requests.Session()
@@ -53,12 +55,22 @@ class BaseParser(Parser):
         self.session = session
         self.config = Config()
         self.target_dict = target_dict
+        self.cache_dir = Path('cache')
+        self.cache_dir.mkdir(exist_ok=True)
 
     def get_soup(self, source: str, name: str=None, attrs: dict={}):
-        response = self.session.get(source)
-        strainer = SoupStrainer(name=name, attrs=attrs)
-        soup = bs(response.text, 'lxml', parse_only=strainer)
+        hash_name = hashlib.md5(source.encode()).hexdigest()
+        html_path = self.cache_dir / f'{hash_name}.html'
 
+        if html_path.exists():
+            text = html_path.read_text(encoding='utf-8')
+        else:
+            response = self.session.get(source)
+            text = response.text
+            html_path.write_text(text, encoding='utf-8')
+
+        strainer = SoupStrainer(name=name, attrs=attrs)
+        soup = bs(text, 'lxml', parse_only=strainer)
         return soup
     
     def get_last_page(self, type_url) -> int:
