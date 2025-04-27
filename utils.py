@@ -20,7 +20,6 @@ session.mount('https://', adapter)
 class FileManager:
     def __init__(self, deal, property):
         self.filepath = Path().absolute()
-        self.df = pd.DataFrame()
         self.deal = deal
         self.property = property
         self.lock = threading.Lock()
@@ -31,8 +30,8 @@ class FileManager:
            self.rows.append(data)
     
     def save(self) -> None:
-        df = pd.DataFrame([self.rows])
-        self.df.to_csv(self.filepath / f'{self.deal}_{self.property}.csv')
+        df = pd.DataFrame(self.rows)
+        df.to_csv(self.filepath / f'{self.deal}_{self.property}.csv')
 
 
 class Parser(ABC):
@@ -110,7 +109,7 @@ class BaseParser(Parser):
         soup = self.get_soup(unit, name='div')
         d1 = self.parse_const(soup, self.config.const_target_dict)
         d2 = self.parse_dynamic(soup, self.target_dict)
-        
+
         return d1 | d2
     
     
