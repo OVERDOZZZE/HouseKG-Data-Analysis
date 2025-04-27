@@ -24,13 +24,14 @@ class FileManager:
         self.deal = deal
         self.property = property
         self.lock = threading.Lock()
+        self.rows = []
 
     def add(self, data: dict) -> None:
        with self.lock:
-        data_df = pd.DataFrame([data])
-        self.df = pd.concat([self.df, data_df], ignore_index=True)
+           self.rows.append(data)
     
     def save(self) -> None:
+        df = pd.DataFrame([self.rows])
         self.df.to_csv(self.filepath / f'{self.deal}_{self.property}.csv')
 
 
