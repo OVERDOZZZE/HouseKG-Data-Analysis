@@ -30,7 +30,7 @@ class FileManager:
     def add(self, data: dict) -> None:
        with self.lock:
            self.rows.append(data)
-           if len(self.rows >= 100):
+           if len(self.rows) >= 100:
                self.save()
                self.rows = ()
     
