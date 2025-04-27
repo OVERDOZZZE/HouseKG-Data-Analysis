@@ -1,12 +1,20 @@
 import requests
 from bs4 import BeautifulSoup as bs, SoupStrainer
+import requests.adapters
 from config import Config
 import lxml
 from pathlib import Path
 import pandas as pd
 from abc import ABC, abstractmethod
 from typing import Any
+from urllib3.util.retry import Retry
 import threading
+
+
+session = requests.Session()
+adapter = requests.adapters.HTTPAdapter(pool_connections=100, pool_maxsize=100, max_retries=Retry(total=5, backoff_factor=0.2))
+session.mount('http://', adapter)
+session.mount('https://', adapter)
 
 
 class FileManager:
@@ -39,7 +47,7 @@ class Parser(ABC):
 
 class BaseParser(Parser):
     def __init__(self, target_dict):
-        self.session = requests.Session()
+        self.session = session
         self.config = Config()
         self.target_dict = target_dict
 
