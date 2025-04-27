@@ -4,7 +4,10 @@ from utils import FileManager
 from concurrent.futures import ThreadPoolExecutor
 import time
 import threading
+from multiprocessing import cpu_count
 
+page_threads = min(cpu_count() * 2, 10)
+unit_threads = min(cpu_count() * 4, 40)
 
 class App:
     def __init__(self):
@@ -32,12 +35,12 @@ class App:
 
         # 1. First collect all unit URLs
         all_units = []
-        with ThreadPoolExecutor(max_workers=5) as page_pool:
+        with ThreadPoolExecutor(max_workers=page_threads) as page_pool:
             for page_units in page_pool.map(self.parser.collect_units, urls):
                 all_units.extend(page_units)
 
         # 2. Then parse all units
-        with ThreadPoolExecutor(max_workers=10) as unit_pool:
+        with ThreadPoolExecutor(max_workers=unit_threads) as unit_pool:
             for result in unit_pool.map(self.parser.parse, all_units):
                 yield result
 
