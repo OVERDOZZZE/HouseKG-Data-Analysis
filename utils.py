@@ -10,7 +10,7 @@ from typing import Any
 from urllib3.util.retry import Retry
 import threading
 import hashlib
-import os
+import time
 
 
 session = requests.Session()
@@ -127,93 +127,10 @@ class BaseParser(Parser):
 
         return d1 | d2
     
-    
+    def clean_old_cache(self, days: int = 3) -> None:
+        now = time.time()
+        lifetime = days * 86400  # 3 дня в секундах
 
-
-# sector_target_dict = {
-#     'Тип предложения': [],
-#     'Площадь участка': [],
-#     'Местоположение': [],
-#     'Коммуникации': [],
-#     'Разное': [],
-#     'Правоустанавливающие документы': [],
-#     'Возможность рассрочки': [],
-#     'Возможность ипотеки': [],
-#     'Возможность обмена': []
-# }
-
-# sector_target_dict = {
-#     'Тип предложения': [],
-#     'Дом': [],
-#     'Кол-во этажей': [],
-#     'Площадь': [],
-#     'Площадь участка': [],
-#     'Отопление': [],
-#     'Состояние': [],
-#     'Телефон': [],
-#     'Интернет': [],
-#     'Санузел': [],
-#     'Канализация': [],
-#     'Питьевая вода': [],
-#     'Электричество': [],
-#     'Газ': [],
-#     'Мебель': [],
-#     'Пол': [],
-#     'Безопасность': [],
-#     'Высота потолков': [],
-#     'Правоустанавливающие документы': [],
-#     'Возможность рассрочки': [],
-#     'Возможность ипотеки': [],
-#     'Возможность обмена': []
-# }
-
-
-# # Sector Parser Interface
-
-# deal_types = {
-#     'sale': 'kupit',
-#     'rent': 'snyat'
-# }
-
-# property_types = {
-#     'apartment': 'kvartiru',
-#     'private_house': 'dom',
-#     'commercial_property': 'kommercheskaia-nedvijimost',
-#     'room': 'komnatu',
-#     'sector': 'uchastok',
-#     'country_house': 'dachu',
-#     'parking_and_garage': 'parking-garaj'
-# }
-
-# deal = input(f'Select deal type: \n1.sale\n2.rent\nYour selection: ')
-# property= input(f'\nSelect property type: \n1.apartment\n2.private_house\n3.sector\nYour selection: ')
-
-# type_url = 'https://house.kg' + f'/{deal_types[deal]}-{property_types[property]}?page='
-
-
-# parser = BaseParser(target_dict=sector_target_dict)
-
-# last_page = parser.get_last_page(type_url)
-
-# print(f'\nHere are {last_page} pages for that deal and property type! Select the range:')
-# first_page = int(input('\nStart from page: '))
-# last_page = int(input('\nStop on page: '))
-
-# print(f'\nAccepted! Pages to be parsed: {last_page - first_page}\n')
-
-
-# def func():
-#     for page in range(first_page, last_page):
-#         page_url = type_url + str(page)
-#         print(page_url)
-#         urls = parser.collect_units(page_url)
-#         for url in urls:
-#             yield parser.parse(url)
-
-# df = pd.DataFrame()
-
-# for row in func():
-#     df = pd.concat([df, pd.DataFrame([row])], ignore_index=True)
-
-# df.to_csv('private_houses.csv', mode='a')
-
+        for file in self.cache_dir.glob('*.html'):
+            if now - file.stat().st_mtime > lifetime:
+                file.unlink()
