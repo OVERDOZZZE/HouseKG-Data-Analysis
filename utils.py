@@ -6,6 +6,7 @@ from pathlib import Path
 import pandas as pd
 from abc import ABC, abstractmethod
 from typing import Any
+import threading
 
 
 class FileManager:
@@ -14,10 +15,12 @@ class FileManager:
         self.df = pd.DataFrame()
         self.deal = deal
         self.property = property
+        self.lock = threading.Lock()
 
     def add(self, data: dict) -> None:
-       data_df = pd.DataFrame([data])
-       self.df = pd.concat([self.df, data_df], ignore_index=True)
+       with self.lock:
+        data_df = pd.DataFrame([data])
+        self.df = pd.concat([self.df, data_df], ignore_index=True)
     
     def save(self) -> None:
         self.df.to_csv(self.filepath / f'{self.deal}_{self.property}.csv')

@@ -39,10 +39,10 @@ class Config:
     
     @staticmethod
     def get_parser_types():
-        from parsers import SectorParser
+        from parsers import SectorParser, PrivateHouseParser
         return {
                 # 'apartment': ApartmentParser,
-                # 'private_house': PrivateHouseParser,
+                'private_house': PrivateHouseParser,
                 # 'commercial_property': CommercialPropertyParser,
                 # 'room': RoomParser,
                 'sector': SectorParser,
@@ -65,6 +65,31 @@ class SectorConfig(Config):
         'Возможность обмена': []
     }
 
+class PrivateHouseConfig(Config):
+    target_dict = {
+        'Тип предложения': [],
+        'Дом': [],
+        'Кол-во этажей': [],
+        'Площадь': [],
+        'Площадь участка': [],
+        'Отопление': [],
+        'Состояние': [],
+        'Телефон': [],
+        'Интернет': [],
+        'Санузел': [],
+        'Канализация': [],
+        'Питьевая вода': [],
+        'Электричество': [],
+        'Газ': [],
+        'Мебель': [],
+        'Пол': [],
+        'Безопасность': [],
+        'Высота потолков': [],
+        'Правоустанавливающие документы': [],
+        'Возможность рассрочки': [],
+        'Возможность ипотеки': [],
+        'Возможность обмена': []
+    }
 
 
 class ContractType(Enum):

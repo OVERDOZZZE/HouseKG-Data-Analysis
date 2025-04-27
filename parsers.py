@@ -11,3 +11,14 @@ class SectorParser(BaseParser):
     def run(self):
         pass
     
+
+class PrivateHouseParser(BaseParser):
+    def __init__(self):
+        self.config = PrivateHouseParser()
+        target_dict = self.config.target_dict
+
+        super().__init__(target_dict=target_dict)
+
+    def run(self):
+        pass
+    
