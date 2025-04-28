@@ -1,3 +1,4 @@
+# utils.py
 import requests
 from bs4 import BeautifulSoup as bs, SoupStrainer
 import requests.adapters
@@ -21,24 +22,26 @@ session.mount('https://', adapter)
 
 class FileManager:
     def __init__(self, deal, property, columns):
-        self.filepath = Path().absolute()
         self.deal = deal
         self.property = property
         self.lock = threading.Lock()
         self.rows = []
-        self.df = pd.DataFrame(columns=[columns])
+        self.columns = columns
+        self.filepath = Path().absolute() / f'{self.deal}_{self.property}.csv'
 
     def add(self, data: dict) -> None:
-       with self.lock:
-           self.rows.append(data)
-           if len(self.rows) >= 70:
-               self.save()
-               self.rows = []
+        with self.lock:
+            completed_data = {col: data.get(col, '') for col in self.columns}
+            self.rows.append(completed_data)
+            if len(self.rows) >= 70:
+                self.save()
+                self.rows = []
     
     def save(self) -> None:
         df = pd.DataFrame(self.rows)
+        df = df[self.columns]
         df.to_csv(
-            self.filepath / f'{self.deal}_{self.property}.csv',
+            self.filepath,
             mode='a',
             header=not self.filepath.exists(),
             index=False,
@@ -57,9 +60,9 @@ class Parser(ABC):
     
 
 class BaseParser(Parser):
-    def __init__(self, target_dict):
+    def __init__(self, target_dict, config):
         self.session = session
-        self.config = Config()
+        self.config = config
         self.target_dict = target_dict
         self.cache_dir = Path('cache')
         self.cache_dir.mkdir(exist_ok=True)
@@ -113,9 +116,9 @@ class BaseParser(Parser):
             'Район': district,
             'Цена': price,
         })
-        
-        return targets
 
+        return targets  
+      
     def parse_dynamic(self, soup, targets: dict) -> dict:
         dynamic_data = soup.find_all('div', class_='info-row')
 

@@ -1,9 +1,9 @@
+# main.py
 from config import Config
 from parsers import *
 from utils import FileManager
 from concurrent.futures import ThreadPoolExecutor
 import time
-import threading
 
 
 class Runner:
@@ -30,11 +30,9 @@ class Runner:
     def run(self):
         start = time.time()
         units = self.collect_units()
-
         with ThreadPoolExecutor(max_workers=10) as unit_pool:
             for result in unit_pool.map(self.parser.parse, units):
                 self.filemanager.add(result)
-
         self.filemanager.save()
         end = time.time()
 
@@ -51,9 +49,10 @@ class Builder:
     def build(self):
         parser_types = self.config.get_parser_types()
         parser = parser_types[self.property]()
-        filemanager = FileManager(self.deal, self.property, parser.target_dict.keys())
+        columns = list(parser.config.const_target_dict.keys()) + list(parser.config.target_dict.keys())
+        filemanager = FileManager(self.deal, self.property, columns)
         pattern_url = self.config.base_url + f'/{self.config.deal_types[self.deal]}-{self.config.property_types[self.property]}?page='
-        print(pattern_url)
+
         return Runner(
             parser=parser,
             filemanager=filemanager,
@@ -64,16 +63,3 @@ class Builder:
             pattern_url=pattern_url
         )
     
-
-def main(property, start_page, stop_page, deal='sale'):
-    builder = Builder(property, start_page, stop_page, deal)
-    scraper = builder.build()
-    execution_time = scraper.run()
-    print(f"Scraping completed in {execution_time} seconds.")
-
-if __name__ == "__main__":
-    property = input("Enter property type: ")
-    start_page = int(input("Enter start page: "))
-    stop_page = int(input("Enter stop page: "))
-    main(property, start_page, stop_page)
-

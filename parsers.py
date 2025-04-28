@@ -1,12 +1,11 @@
+# parsers.py
 from utils import BaseParser
 from config import SectorConfig, PrivateHouseConfig
 
 class SectorParser(BaseParser):
     def __init__(self):
-        self.config = SectorConfig()
-        target_dict = self.config.target_dict
-
-        super().__init__(target_dict=target_dict)
+        config = SectorConfig()
+        super().__init__(target_dict=config.target_dict, config=config)
 
     def run(self):
         pass
@@ -14,10 +13,8 @@ class SectorParser(BaseParser):
 
 class PrivateHouseParser(BaseParser):
     def __init__(self):
-        self.config = PrivateHouseConfig
-        target_dict = self.config.target_dict
-
-        super().__init__(target_dict=target_dict)
+        config = PrivateHouseConfig()
+        super().__init__(target_dict=config.target_dict, config=config)
 
     def run(self):
         pass
