@@ -28,16 +28,25 @@ class FileManager:
         self.rows = []
         self.columns = columns
         self.filepath = Path().absolute() / f'{self.deal}_{self.property}.csv'
+        self.existing_urls = set()
+        if self.filepath.exists():
+            df = pd.read_csv(self.filepath, usecols=['URL'])
+            self.existing_urls = set(df['URL'])
 
     def add(self, data: dict) -> None:
+        """Add data only if its URL is not already processed."""
         with self.lock:
-            completed_data = {col: data.get(col, '') for col in self.columns}
-            self.rows.append(completed_data)
-            if len(self.rows) >= 70:
-                self.save()
-                self.rows = []
-    
+            if data['URL'] not in self.existing_urls:
+                self.existing_urls.add(data['URL'])
+                completed_data = {col: data.get(col, '') for col in self.columns}
+                self.rows.append(completed_data)
+                if len(self.rows) >= 70:
+                    self.save()
+                    self.rows = []
+
     def save(self) -> None:
+        if not self.rows:  
+            return 
         df = pd.DataFrame(self.rows)
         df = df[self.columns]
         df.to_csv(
@@ -66,21 +75,42 @@ class BaseParser(Parser):
         self.target_dict = target_dict
         self.cache_dir = Path('cache')
         self.cache_dir.mkdir(exist_ok=True)
+        self.cache_lifetime = 3 * 86400  
 
     def get_soup(self, source: str, name: str=None, attrs: dict={}):
         hash_name = hashlib.md5(source.encode()).hexdigest()
         html_path = self.cache_dir / f'{hash_name}.html'
-
+        
         if html_path.exists():
-            text = html_path.read_text(encoding='utf-8')
+            file_age = time.time() - html_path.stat().st_mtime
+            if file_age < self.cache_lifetime:
+                text = html_path.read_text(encoding='utf-8')
+            else:
+                response = self.session.get(source)
+                text = response.text
+                html_path.write_text(text, encoding='utf-8')
         else:
             response = self.session.get(source)
             text = response.text
             html_path.write_text(text, encoding='utf-8')
-
+        
         strainer = SoupStrainer(name=name, attrs=attrs)
         soup = bs(text, 'lxml', parse_only=strainer)
         return soup
+    
+    def clean_old_cache(self) -> None:
+        """Remove cache files older than the lifetime."""
+        now = time.time()
+        for file in self.cache_dir.glob('*.html'):
+            if now - file.stat().st_mtime > self.cache_lifetime:
+                file.unlink()
+
+    def parse(self, unit: str) -> dict:
+        """Parse a unit and include its URL in the result."""
+        soup = self.get_soup(unit, name='div')
+        d1 = self.parse_const(soup, self.config.const_target_dict)
+        d2 = self.parse_dynamic(soup, self.target_dict)
+        return {'URL': unit, **d1, **d2}
     
     def get_last_page(self, type_url) -> int:
         soup = self.get_soup(type_url, 'a', {'class': 'page-link'})
@@ -129,17 +159,17 @@ class BaseParser(Parser):
 
         return targets
 
-    def parse(self, unit: str) -> dict:
-        soup = self.get_soup(unit, name='div')
-        d1 = self.parse_const(soup, self.config.const_target_dict)
-        d2 = self.parse_dynamic(soup, self.target_dict)
+    # def parse(self, unit: str) -> dict:
+    #     soup = self.get_soup(unit, name='div')
+    #     d1 = self.parse_const(soup, self.config.const_target_dict)
+    #     d2 = self.parse_dynamic(soup, self.target_dict)
 
-        return d1 | d2
+    #     return d1 | d2
     
-    def clean_old_cache(self, days: int = 3) -> None:
-        now = time.time()
-        lifetime = days * 86400  
+    # def clean_old_cache(self, days: int = 3) -> None:
+    #     now = time.time()
+    #     lifetime = days * 86400  
 
-        for file in self.cache_dir.glob('*.html'):
-            if now - file.stat().st_mtime > lifetime:
-                file.unlink()
+    #     for file in self.cache_dir.glob('*.html'):
+    #         if now - file.stat().st_mtime > lifetime:
+    #             file.unlink()
