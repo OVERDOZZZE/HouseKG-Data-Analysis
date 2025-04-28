@@ -4,6 +4,7 @@ import fake_useragent
 
 class Config:
     base_url = 'https://house.kg'
+    pattern_url = 'https://house.kg/{deal}-{property}?page='
     headers = {
         'User-Agent': fake_useragent.UserAgent().random,
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',

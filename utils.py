@@ -20,13 +20,13 @@ session.mount('https://', adapter)
 
 
 class FileManager:
-    def __init__(self, deal, property):
+    def __init__(self, deal, property, columns):
         self.filepath = Path().absolute()
         self.deal = deal
         self.property = property
         self.lock = threading.Lock()
         self.rows = []
-        self.df = pd.DataFrame(columns=[])
+        self.df = pd.DataFrame(columns=[columns])
 
     def add(self, data: dict) -> None:
        with self.lock:
