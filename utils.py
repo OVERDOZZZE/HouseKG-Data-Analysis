@@ -26,17 +26,23 @@ class FileManager:
         self.property = property
         self.lock = threading.Lock()
         self.rows = []
+        self.df = pd.DataFrame(columns=[])
 
     def add(self, data: dict) -> None:
        with self.lock:
            self.rows.append(data)
-           if len(self.rows) >= 100:
+           if len(self.rows) >= 70:
                self.save()
                self.rows = ()
     
     def save(self) -> None:
         df = pd.DataFrame(self.rows)
-        df.to_csv(self.filepath / f'{self.deal}_{self.property}.csv', mode='a', header=not self.filepath.exists())
+        df.to_csv(
+            self.filepath / f'{self.deal}_{self.property}.csv',
+            mode='a',
+            header=not self.filepath.exists(),
+            index=False,
+        )
 
 
 class Parser(ABC):
@@ -129,7 +135,7 @@ class BaseParser(Parser):
     
     def clean_old_cache(self, days: int = 3) -> None:
         now = time.time()
-        lifetime = days * 86400  # 3 дня в секундах
+        lifetime = days * 86400  
 
         for file in self.cache_dir.glob('*.html'):
             if now - file.stat().st_mtime > lifetime:

@@ -4,9 +4,8 @@ from utils import FileManager
 from concurrent.futures import ThreadPoolExecutor
 import time
 import threading
-from multiprocessing import cpu_count
 
-
+ 
 class App:
     def __init__(self):
         self.config = Config()
@@ -20,7 +19,8 @@ class App:
 
     def setup(self) -> None:
         self.type_url = f'https://house.kg/{self.config.deal_types[self.deal]}-{self.config.property_types[self.property]}?page='
-        print(f'\nAccepted! Pages to be parsed: {self.stop_page - self.start_page}\n')
+        total_pages = self.stop_page - self.start_page
+        print(f'\nAccepted! Pages to be parsed: {total_pages}\nTotal URLs to be scraped: {total_pages * 10}')
 
         parser_type = self.config.get_parser_types()
         self.parser = parser_type[self.property]()
@@ -30,14 +30,11 @@ class App:
 
     def run(self):
         urls = self.get_page_urls()
-
-        # 1. First collect all unit URLs
         all_units = []
         with ThreadPoolExecutor(max_workers=5) as page_pool:
             for page_units in page_pool.map(self.parser.collect_units, urls):
                 all_units.extend(page_units)
 
-        # 2. Then parse all units
         with ThreadPoolExecutor(max_workers=10) as unit_pool:
             for result in unit_pool.map(self.parser.parse, all_units):
                 yield result
