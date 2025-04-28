@@ -33,7 +33,7 @@ class FileManager:
            self.rows.append(data)
            if len(self.rows) >= 70:
                self.save()
-               self.rows = ()
+               self.rows = []
     
     def save(self) -> None:
         df = pd.DataFrame(self.rows)

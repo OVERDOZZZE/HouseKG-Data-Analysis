@@ -7,39 +7,38 @@ import threading
 
 
 class Runner:
-    def __init__(self, parser, filemanager, deal, property, start_page, stop_page):
+    def __init__(self, parser, filemanager, deal, property, start_page, stop_page, pattern_url):
         self.parser = parser
         self.filemanager = filemanager
         self.deal = deal
         self.property = property
         self.start_page = start_page
         self.stop_page = stop_page
+        self.patter_url = pattern_url
 
     def get_page_urls(self):
-        return [self.pattern_url + str(url) for url in range(self.start_page, self.stop_page)]
+        return [self.patter_url + str(url) for url in range(self.start_page, self.stop_page)]
     
-    def run(self):
+    def collect_units(self):
         urls = self.get_page_urls()
-        all_units = []
-        with ThreadPoolExecutor(max_workers=5) as page_pool:
-            for page_units in page_pool.map(self.parser.collect_units, urls):
-                all_units.extend(page_units)
+        units = []
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            for page_units in executor.map(self.parser.collect_units, urls):
+                units.extend(page_units)
+        return units
+
+    def run(self):
+        start = time.time()
+        units = self.collect_units()
 
         with ThreadPoolExecutor(max_workers=10) as unit_pool:
-            for result in unit_pool.map(self.parser.parse, all_units):
-                yield result
+            for result in unit_pool.map(self.parser.parse, units):
+                self.filemanager.add(result)
 
-    def start(self):
-        start = time.time()
-        for row in self.run():
-            self.filemanager.add(row)
         self.filemanager.save()
         end = time.time()
-        print(f'Time consumed: {round(end - start, 4)} seconds')
 
-        if self.filemanager.rows:
-            self.filemanager.save()
-
+        return round(end - start, 4)
 
 class Builder:
     def __init__(self, property: str, start_page: int, stop_page: int, deal: str='sale'):
@@ -51,39 +50,30 @@ class Builder:
 
     def build(self):
         parser_types = self.config.get_parser_types()
-        parser = parser_types[self.property_type]()
-        filemanager = FileManager(self.deal, self.property, self.parser.target_dict.keys())
-
+        parser = parser_types[self.property]()
+        filemanager = FileManager(self.deal, self.property, parser.target_dict.keys())
+        pattern_url = self.config.base_url + f'/{self.config.deal_types[self.deal]}-{self.config.property_types[self.property]}?page='
+        print(pattern_url)
         return Runner(
             parser=parser,
             filemanager=filemanager,
             deal=self.deal,
             property=self.property,
             start_page=self.start_page,
-            stop_page=self.stop_page
+            stop_page=self.stop_page,
+            pattern_url=pattern_url
         )
     
 
- 
-class App:
-    def __init__(self, property, start_page, stop_page, deal: str='sale',):
-        self.lock = threading.Lock()
+def main(property, start_page, stop_page, deal='sale'):
+    builder = Builder(property, start_page, stop_page, deal)
+    scraper = builder.build()
+    execution_time = scraper.run()
+    print(f"Scraping completed in {execution_time} seconds.")
 
-    def config(self):
-        self.pattern_url = self.config.pattern_url
-
-        self.type_url = f'https://house.kg/{self.config.deal_types[self.deal]}-{self.config.property_types[self.property]}?page='
-        total_pages = self.stop_page - self.start_page
-        print(f'\nAccepted! Pages to be parsed: {total_pages}\nTotal URLs to be scraped: {total_pages * 10}')
-
-        parser_type = self.config.get_parser_types()
-        self.parser = parser_type[self.property]()
-
-
-
-
-if __name__ == '__main__':
-    app = App()
-    app.setup()
-    app.start()
+if __name__ == "__main__":
+    property = input("Enter property type: ")
+    start_page = int(input("Enter start page: "))
+    stop_page = int(input("Enter stop page: "))
+    main(property, start_page, stop_page)
 
