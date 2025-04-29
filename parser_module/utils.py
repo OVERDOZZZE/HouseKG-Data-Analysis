@@ -21,17 +21,27 @@ session.mount('https://', adapter)
 
 
 class FileManager:
-    def __init__(self, deal, property_type, columns, output_path=None):
+    def __init__(self, deal: str, property_type: str, columns: list[str], output_path: str | None = None):
         self.deal = deal
         self.property_type = property_type
-        self.lock = threading.Lock()
-        self.rows = []
         self.columns = columns
-        self.output_path = output_path
-        if self.output_path:
-            self.filepath = Path(self.output_path)
+        self.rows = []
+        self.existing_urls = set()
+
+        if output_path:
+            self.filepath = Path(output_path)
         else:
-            self.filepath = Path().absolute() / f'{self.deal}_{self.property_type}.csv'
+            # 🛠 Force output to /tmp/ when running in Streamlit Cloud
+            if os.getenv('STREAMLIT_CLOUD') == '1':
+                output_dir = Path('/tmp')
+            else:
+                output_dir = Path().absolute()
+
+            self.filepath = output_dir / f'{self.deal}_{self.property_type}.csv'
+
+        if self.filepath.exists():
+            df = pd.read_csv(self.filepath, usecols=['URL'])
+            self.existing_urls = set(df['URL'].dropna().tolist())
 
     def add(self, data: dict) -> None:
         with self.lock:
@@ -47,12 +57,16 @@ class FileManager:
             return
         df = pd.DataFrame(self.rows)
         df = df[self.columns]
+        
+        self.filepath.parent.mkdir(parents=True, exist_ok=True)
+        
         df.to_csv(
             self.filepath,
             mode='a',
             header=not self.filepath.exists(),
             index=False,
         )
+
 
 
 
