@@ -1,6 +1,6 @@
 venv/
 cache/
 cache
-*.csv
+# *.csv
 __pycache__/
 tasks.txt
