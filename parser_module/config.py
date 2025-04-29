@@ -44,7 +44,7 @@ class Config:
     
     @staticmethod
     def get_parser_types():
-        from parsers import SectorParser, PrivateHouseParser
+        from parser_module.parsers import SectorParser, PrivateHouseParser
         return {
                 'private_house': PrivateHouseParser,
                 'sector': SectorParser,

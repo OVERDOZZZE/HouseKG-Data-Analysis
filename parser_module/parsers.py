@@ -1,6 +1,6 @@
 # parsers.py
-from utils import BaseParser
-from config import SectorConfig, PrivateHouseConfig
+from parser_module.utils import BaseParser
+from parser_module.config import SectorConfig, PrivateHouseConfig
 
 class SectorParser(BaseParser):
     def __init__(self):

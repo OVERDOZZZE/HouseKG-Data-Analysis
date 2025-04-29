@@ -2,7 +2,7 @@
 import requests
 from bs4 import BeautifulSoup as bs, SoupStrainer
 import requests.adapters
-from config import Config
+from parser_module.config import Config
 import lxml
 from pathlib import Path
 import pandas as pd
@@ -21,16 +21,19 @@ session.mount('https://', adapter)
 
 
 class FileManager:
-    def __init__(self, deal, property, columns):
+    def __init__(self, deal, property_type, columns, output_path=None):
         self.deal = deal
-        self.property = property
+        self.property_type = property_type
         self.lock = threading.Lock()
         self.rows = []
         self.columns = columns
-        self.filepath = Path().absolute() / f'{self.deal}_{self.property}.csv'
+        self.output_path = output_path
+        if self.output_path:
+            self.filepath = Path(self.output_path)
+        else:
+            self.filepath = Path().absolute() / f'{self.deal}_{self.property_type}.csv'
 
     def add(self, data: dict) -> None:
-        """Add data only if its URL is not already processed."""
         with self.lock:
             completed_data = {col: data.get(col, '') for col in self.columns}
             self.rows.append(completed_data)
@@ -40,8 +43,8 @@ class FileManager:
                 self.rows = []
 
     def save(self) -> None:
-        if not self.rows:  
-            return 
+        if not self.rows:
+            return
         df = pd.DataFrame(self.rows)
         df = df[self.columns]
         df.to_csv(
@@ -50,6 +53,7 @@ class FileManager:
             header=not self.filepath.exists(),
             index=False,
         )
+
 
 
 class Parser(ABC):
