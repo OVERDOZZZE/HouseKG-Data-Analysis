@@ -29,6 +29,8 @@ class FileManager:
         self.rows = []
         self.existing_urls = set()
         self.lock = threading.Lock()
+        self.BATCH_SIZE = 1000
+
         if output_path:
             self.filepath = Path(output_path)
         else:
@@ -47,7 +49,7 @@ class FileManager:
         with self.lock:
             completed_data = {col: data.get(col, '') for col in self.columns}
             self.rows.append(completed_data)
-            if len(self.rows) >= 200:
+            if len(self.rows) >= self.BATCH_SIZE:
                 self.save()
                 print('\n---------20 PAGEs SCRAPED---------------\n')
                 self.rows = []

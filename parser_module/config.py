@@ -44,10 +44,11 @@ class Config:
     
     @staticmethod
     def get_parser_types():
-        from parser_module.parsers import SectorParser, PrivateHouseParser
+        from parser_module.parsers import SectorParser, PrivateHouseParser, ApartmentParser
         return {
                 'private_house': PrivateHouseParser,
                 'sector': SectorParser,
+                'apartment': ApartmentParser
             }
     
 @dataclass
@@ -65,6 +66,33 @@ class SectorConfig(Config):
     }
 
 class PrivateHouseConfig(Config):
+    target_dict = {
+        'Тип предложения': '',
+        'Дом': '',
+        'Кол-во этажей': '',
+        'Площадь': '',
+        'Площадь участка': '',
+        'Отопление': '',
+        'Состояние': '',
+        'Телефон': '',
+        'Интернет': '',
+        'Санузел': '',
+        'Канализация': '',
+        'Питьевая вода': '',
+        'Электричество': '',
+        'Газ': '',
+        'Мебель': '',
+        'Пол': '',
+        'Безопасность': '',
+        'Высота потолков': '',
+        'Правоустанавливающие документы': '',
+        'Возможность рассрочки': '',
+        'Возможность ипотеки': '',
+        'Возможность обмена': ''
+    }
+
+
+class ApartmentConfig(Config):
     target_dict = {
         'Тип предложения': '',
         'Дом': '',

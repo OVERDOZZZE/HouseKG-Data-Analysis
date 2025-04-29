@@ -1,5 +1,6 @@
 import pandas as pd
 import plotly.express as px
+import re
 
 def price_distribution_dashboard(df):
     bins = [0, 10000, 25000, 50000, 75000, 100000, 150000, 200000, 300000, 500000, 1000000, float('inf')]
@@ -106,6 +107,34 @@ def bishkek_district_avg_price_dashboard(df):
         return fig_top, fig_all
     return None, None
 
+def bishkek_district_avg_price_private_house_dashboard(df):
+    bishkek_df = df[(df['Город/Село'] == 'Бишкек') & (df['Район'].notna())]
+    if not bishkek_df.empty:
+        district_avg = bishkek_df.groupby('Район')['Цена (int)'].mean().sort_values(ascending=False).reset_index()
+        top_10 = district_avg.head(20)
+        fig_top = px.bar(
+            top_10,
+            x='Район',
+            y='Цена (int)',
+            title='Top 10 Districts in Bishkek by Average Price for Private Houses',
+            labels={'Цена (int)': 'Average Price ($)'},
+            color='Цена (int)',
+            color_continuous_scale='Blues'
+        )
+        fig_all = px.bar(
+            district_avg,
+            x='Район',
+            y='Цена (int)',
+            title='All Districts in Bishkek by Average Price for Private Houses',
+            labels={'Цена (int)': 'Average Price ($)'},
+            color='Цена (int)',
+            color_continuous_scale='Blues'
+        )
+        fig_top.update_layout(coloraxis_showscale=False)
+        fig_all.update_layout(coloraxis_showscale=False)
+        return fig_top, fig_all
+    return None, None
+
 def offer_type_distribution_dashboard(df):
     offer_type_counts = df['Тип предложения'].value_counts().reset_index()
     offer_type_counts.columns = ['Тип предложения', 'count']
@@ -117,3 +146,50 @@ def offer_type_distribution_dashboard(df):
         title="Distribution of Listings by Offer Type"
     )
     return fig
+
+def rooms_distribution_dashboard(df):
+    if 'Rooms' in df.columns:
+        room_counts = df['Rooms'].value_counts().reset_index()
+        room_counts.columns = ['Rooms', 'Count']
+        room_counts['Rooms'] = pd.Categorical(room_counts['Rooms'], categories=['1', '2', '3', '4', '5', '6+'], ordered=True)
+        room_counts = room_counts.sort_values('Rooms')
+        fig = px.bar(
+            room_counts,
+            x='Rooms',
+            y='Count',
+            title='Distribution of Number of Rooms',
+            labels={'Rooms': 'Number of Rooms', 'Count': 'Number of Houses'}
+        )
+        return fig
+    return None
+
+def house_area_distribution_dashboard(df):
+    if 'House Area' in df.columns:
+        bins = [0, 50, 100, 150, 200, 250, 300, 400, 500, float('inf')]
+        labels = ['<50', '50-100', '100-150', '150-200', '200-250', '250-300', '300-400', '400-500', '>500']
+        df['Area Range'] = pd.cut(df['House Area'], bins=bins, labels=labels)
+        area_counts = df['Area Range'].value_counts().sort_index().reset_index()
+        area_counts.columns = ['Area Range', 'Count']
+        fig = px.bar(
+            area_counts,
+            x='Area Range',
+            y='Count',
+            title='House Area Distribution',
+            labels={'Area Range': 'House Area (m²)', 'Count': 'Number of Houses'}
+        )
+        return fig
+    return None
+
+def heating_type_distribution_dashboard(df):
+    if 'Отопление' in df.columns:
+        heating_counts = df['Отопление'].value_counts().reset_index()
+        heating_counts.columns = ['Heating Type', 'Count']
+        fig = px.pie(
+            heating_counts,
+            names='Heating Type',
+            values='Count',
+            title='Heating Type Distribution',
+            hole=0.4
+        )
+        return fig
+    return None
