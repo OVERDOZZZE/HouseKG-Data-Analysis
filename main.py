@@ -22,7 +22,7 @@ class Runner:
     def collect_units(self):
         urls = self.get_page_urls()
         units = []
-        with ThreadPoolExecutor(max_workers=5) as executor:
+        with ThreadPoolExecutor(max_workers=10) as executor:
             for page_units in executor.map(self.parser.collect_units, urls):
                 units.extend(page_units)
         return units
@@ -31,7 +31,7 @@ class Runner:
         self.parser.clean_old_cache() 
         start = time.time()
         units = self.collect_units()
-        with ThreadPoolExecutor(max_workers=10) as unit_pool:
+        with ThreadPoolExecutor(max_workers=15) as unit_pool:
             for result in unit_pool.map(self.parser.parse, units):
                 self.filemanager.add(result)
         self.filemanager.save()
