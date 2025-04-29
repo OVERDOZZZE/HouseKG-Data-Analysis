@@ -12,6 +12,7 @@ from urllib3.util.retry import Retry
 import threading
 import hashlib
 import time
+import os
 
 
 session = requests.Session()
@@ -27,11 +28,10 @@ class FileManager:
         self.columns = columns
         self.rows = []
         self.existing_urls = set()
-
+        self.lock = threading.Lock()
         if output_path:
             self.filepath = Path(output_path)
         else:
-            # 🛠 Force output to /tmp/ when running in Streamlit Cloud
             if os.getenv('STREAMLIT_CLOUD') == '1':
                 output_dir = Path('/tmp')
             else:
