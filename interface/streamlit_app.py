@@ -22,14 +22,12 @@ from parser_module.main import Builder
 
 st.set_page_config(page_title='HouseKG Scraper', layout='wide')
 
-# Function to delete file after a delay
 def delete_file_after_delay(filepath, delay):
     time.sleep(delay)
     if os.path.exists(filepath):
         os.remove(filepath)
         print(f"Deleted {filepath}")
 
-# Create tabs for navigation at the top
 tab1, tab2, tab3 = st.tabs(["Main Page", "Dashboards Page", "Dynamic Parsing Page"])
 
 with tab1:
@@ -58,7 +56,6 @@ with tab2:
         df = pd.read_csv(file_path)
         st.success(f"Loaded {len(df)} rows from {file_path}")
 
-        # Clean price and area
         if 'Цена' in df.columns:
             df['Цена (int)'] = (
                 df['Цена']
@@ -155,7 +152,7 @@ with tab3:
         builder = Builder(property_type=property_type, start_page=start_page, stop_page=stop_page, deal=deal, output_path=unique_output_path)
         runner = builder.build()
 
-        runner.parser.cache_lifetime = 0  # Disable caching for live parsing
+        runner.parser.cache_lifetime = 0 
 
         st.info('⏳ Scraping started...')
         duration = runner.run()
@@ -176,7 +173,6 @@ with tab3:
         if 'Площадь участка' in df.columns:
             df['Площадь (сотки)'] = df['Площадь участка'].str.extract(r'(\d+\.?\d*)').astype(float)
 
-        # Display visualizations (with keys)
         st.subheader("💰 Price Distribution")
         fig1 = price_distribution_dashboard(df)
         st.plotly_chart(fig1, use_container_width=True, key="live_price_dist")
@@ -218,7 +214,6 @@ with tab3:
         fig_offer_type = offer_type_distribution_dashboard(df)
         st.plotly_chart(fig_offer_type, use_container_width=True, key="live_offer_type_dist")
 
-        # Display data tables
         st.subheader("📋 Data Tables")
         display_columns = ['Название', 'Область', 'Город/Село', 'Район', 'Цена', 'Площадь участка']
 
@@ -241,5 +236,4 @@ with tab3:
         else:
             st.info("Area data not available for this property type.")
 
-        # Schedule file deletion after 60 seconds
         threading.Thread(target=delete_file_after_delay, args=(unique_output_path, 60)).start()
